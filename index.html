@@ -15,6 +15,7 @@
             align-items: center; /* Center vertically */
             height: 100vh; /* Full height */
             margin: 0; /* Remove default margin */
+            position: relative; /* Position for overlay */
         }
         .container {
             width: 90%; /* Responsive width */
@@ -27,9 +28,6 @@
             border-radius: 12px; /* Rounded corners */
             padding: 1rem; /* Padding for content */
             transition: background-color 0.3s ease; /* Smooth background transition */
-        }
-        .error-message {
-            background: rgba(15, 15, 15, 0.8); /* Match background for error message */
         }
         .progress-container {
             width: 100%; /* Full width */
@@ -85,7 +83,7 @@
             color: green; /* Color for tick mark */
             margin-left: 0.5rem; /* Space between text and tick mark */
         }
-        #error-overlay {
+        .error-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -96,9 +94,9 @@
             justify-content: center;
             align-items: center;
             z-index: 1000; /* Ensure it appears above other content */
-        }
-        .error-content {
-            text-align: center;
+            color: white; /* Text color */
+            text-align: center; /* Center text */
+            display: none; /* Initially hidden */
         }
         .blur {
             filter: blur(5px); /* Blur effect */
@@ -165,20 +163,6 @@
                         <p class="text-gray-400 text-sm font-light">Real-time network monitoring</p>
                     </div>
                 </div>
-                
-                <div class="error-message hidden" id="error-message">
-                    <div class="flex items-center justify-center">
-                        <i class="fas fa-exclamation-triangle warning-icon"></i>
-                        <p class="text-sm">
-                            <span id="error-text">Oops! It seems you're offline.</span>
-                            <br>
-                            <span class="text-xs">Please check your internet connection.</span>
-                        </p>
-                    </div>
-                    <button id="retry-btn" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none">
-                        Retry
-                    </button>
-                </div>
 
                 <div class="mt-4">
                     <div class="progress-container">
@@ -212,11 +196,11 @@
     </div>
 
     <!-- Error Overlay -->
-    <div id="error-overlay" class="hidden">
-        <div class="error-content">
+    <div class="error-overlay" id="error-overlay">
+        <div>
             <i class="fas fa-exclamation-triangle text-red-500 text-4xl"></i>
-            <p class="text-lg text-white">No Internet Connection</p>
-            <p class="text-sm text-gray-300">Internet required to continue.</p>
+            <p class="text-lg">No Internet Connection</p>
+            <p class="text-sm">Internet is required to continue.</p>
             <button id="refresh-btn" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none">
                 Refresh
             </button>
@@ -230,77 +214,69 @@
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('last-update-date').textContent = today.toLocaleDateString(undefined, options);
 
-            // Check connection status before initialization
-            if (!navigator.onLine) {
-                showError();
-            } else {
-                // Initialize system sequence
-                const initSteps = [
-                    { element: 'title', delay: 2000 }, // Title
-                    { element: 'booting-text', delay: 2000 }, // Booting text
-                    { element: 'booting-subtext', delay: 2000 }, // Booting subtext
-                    { element: 'search-status', delay: 800 }, // Step 1
-                    { element: 'connect-status', delay: 800 }, // Step 2
-                    { element: 'auth-status', delay: 800 }, // Step 3
-                    { element: 'init-text', delay: 700 } // Final step
-                ];
-                
-                let currentInitStep = 0;
-                
-                function runInitStep() {
-                    if (currentInitStep < initSteps.length) {
-                        const step = initSteps[currentInitStep];
-                        const element = document.getElementById(step.element);
-                        
-                        // Show the current element
-                        element.classList.remove('hidden');
-                        element.classList.add('visible');
+            // Initialize system sequence
+            initializeSystem();
 
-                        // Set the text for the init status
-                        if (currentInitStep === 3) {
-                            document.getElementById('init-text').textContent = "Searching database...";
-                            document.querySelector('#search-status .status-complete').classList.remove('hidden');
-                        } else if (currentInitStep === 4) {
-                            document.getElementById('init-text').textContent = "Establishing connection...";
-                            document.querySelector('#connect-status .status-complete').classList.remove('hidden');
-                        } else if (currentInitStep === 5) {
-                            document.getElementById('init-text').textContent = "Authenticating credentials...";
-                            document.querySelector('#auth-status .status-complete').classList.remove('hidden');
-                        } else if (currentInitStep === 6) {
-                            document.getElementById('init-text').textContent = "System ready";
-                        }
+            // Check connection status on load
+            checkConnection();
 
-                        currentInitStep++;
-                        setTimeout(runInitStep, step.delay);
-                    } else {
-                        checkHTTPS();
-                        document.getElementById('connection-status-card').classList.add('visible');
-                        setTimeout(() => {
-                            document.getElementById('connection-status-card').classList.add('visible');
-                        }, 500); // Delay for the connection status card to appear
-                        simulateConnectionProgress(); // Start the progress simulation
-                    }
-                }
-                
-                setTimeout(runInitStep, 500);
-            }
-
-            // Add retry button event listener
-            document.getElementById('retry-btn').addEventListener('click', function() {
-                resetConnection();
-                checkConnection();
-            });
-            
-            // Add online/offline event listeners
-            window.addEventListener('online', function() {
-                checkConnection();
-            });
-            
-            window.addEventListener('offline', function() {
+            // Add event listener for the refresh button
+            document.getElementById('refresh-btn').addEventListener('click', function() {
                 checkConnection();
             });
         });
-        
+
+        function initializeSystem() {
+            const initSteps = [
+                { element: 'title', delay: 2000 }, // Title
+                { element: 'booting-text', delay: 2000 }, // Booting text
+                { element: 'booting-subtext', delay: 2000 }, // Booting subtext
+                { element: 'search-status', delay: 800 }, // Step 1
+                { element: 'connect-status', delay: 800 }, // Step 2
+                { element: 'auth-status', delay: 800 }, // Step 3
+                { element: 'init-text', delay: 700 } // Final step
+            ];
+            
+            let currentInitStep = 0;
+            
+            function runInitStep() {
+                if (currentInitStep < initSteps.length) {
+                    const step = initSteps[currentInitStep];
+                    const element = document.getElementById(step.element);
+                    
+                    // Show the current element
+                    element.classList.remove('hidden');
+                    element.classList.add('visible');
+
+                    // Set the text for the init status
+                    if (currentInitStep === 3) {
+                        document.getElementById('init-text').textContent = "Searching database...";
+                        document.querySelector('#search-status .status-complete').classList.remove('hidden');
+                    } else if (currentInitStep === 4) {
+                        document.getElementById('init-text').textContent = "Establishing connection...";
+                        document.querySelector('#connect-status .status-complete').classList.remove('hidden');
+                    } else if (currentInitStep === 5) {
+                        document.getElementById('init-text').textContent = "Authenticating credentials...";
+                        document.querySelector('#auth-status .status-complete').classList.remove('hidden');
+                    } else if (currentInitStep === 6) {
+                        document.getElementById('init-text').textContent = "System ready";
+                    }
+
+                    currentInitStep++;
+                    setTimeout(runInitStep, step.delay);
+                } else {
+                    checkHTTPS();
+                    document.getElementById('connection-status-card').classList.add('visible');
+                    setTimeout(() => {
+                        document.getElementById('connection-status-card').classList.add('visible');
+                    }, 500); // Delay for the connection status card to appear
+                    simulateConnectionProgress(); // Start the progress simulation
+                }
+            }
+            
+            setTimeout(runInitStep, 500);
+        }
+
         function checkHTTPS() {
             setTimeout(function() {
                 const httpsText = document.getElementById('https-status-text');
@@ -315,43 +291,24 @@
         
         function checkConnection() {
             const statusText = document.getElementById('status-text');
-            const errorBox = document.getElementById('error-message');
             const errorOverlay = document.getElementById('error-overlay');
             const connectionCards = document.querySelectorAll('.connection-card');
-            
+
             if (navigator.onLine) {
                 statusText.textContent = 'Online';
-                errorBox.style.display = 'none'; // Hide error message
-                errorOverlay.classList.add('hidden'); // Hide error overlay
+                errorOverlay.style.display = 'none'; // Hide error overlay
                 connectionCards.forEach(card => card.classList.remove('blur')); // Remove blur effect
-                // Reset tick marks to green
-                document.querySelectorAll('.status-complete').forEach(tick => {
-                    tick.classList.remove('hidden');
-                    tick.classList.add('text-green-400'); // Green tick
-                });
             } else {
                 showError();
             }
         }
 
         function showError() {
-            const statusText = document.getElementById('status-text');
-            const errorBox = document.getElementById('error-message');
             const errorOverlay = document.getElementById('error-overlay');
             const connectionCards = document.querySelectorAll('.connection-card');
 
-            statusText.textContent = 'Offline';
-            document.getElementById('error-text').textContent = 'Oops! It seems you\'re offline.';
-            errorBox.style.display = 'block'; // Show error message
-            errorOverlay.classList.remove('hidden'); // Show error overlay
+            errorOverlay.style.display = 'flex'; // Show error overlay
             connectionCards.forEach(card => card.classList.add('blur')); // Apply blur effect
-            // Change ticks to red crosses
-            document.querySelectorAll('.status-complete').forEach(tick => {
-                tick.classList.add('hidden'); // Hide green ticks
-                const cross = document.createElement('i');
-                cross.className = 'fas fa-times-circle text-red-500 status-complete'; // Red cross
-                tick.parentNode.appendChild(cross); // Append red cross
-            });
         }
         
         function simulateConnectionProgress() {
@@ -380,14 +337,6 @@
                     clearInterval(interval);
                 }
             }, 500); // Update every 500ms for smoother progress
-        }
-
-        function resetConnection() {
-            const statusText = document.getElementById('status-text');
-            statusText.textContent = 'Checking connection...';
-            document.getElementById('percentage-text').textContent = '0%'; // Reset the percentage display
-            document.getElementById('progress-bar').style.width = '0%'; // Reset the progress bar
-            document.getElementById('progress-description').textContent = "Initializing..."; // Reset the progress description
         }
     </script>
 </body>

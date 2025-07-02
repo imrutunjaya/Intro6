@@ -31,31 +31,6 @@
         .error-message {
             background: rgba(15, 15, 15, 0.8); /* Match background for error message */
         }
-        .progress-container {
-            position: relative;
-            display: inline-block;
-            width: 100px; /* Width of the circular progress */
-            height: 100px; /* Height of the circular progress */
-        }
-        .progress-circle {
-            fill: none;
-            stroke-width: 10;
-        }
-        .progress-bg {
-            stroke: rgba(255, 255, 255, 0.2); /* Background circle color */
-        }
-        .progress {
-            stroke: #4F46E5; /* Progress circle color */
-            transition: stroke-dashoffset 0.5s ease; /* Smooth transition for progress */
-        }
-        .percentage {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -98,7 +73,48 @@
                     </div>
                 </div>
             </div>
-            <!-- Circular Progress Indicator -->
+            <!-- Secure Connection Check -->
+            <div class="connection-card" id="secure-connection-card">
+                <div class="mb-6">
+                    <h3 class="text-xl font-light mb-1 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Secure Connection Status
+                    </h3>
+                    <p class="text-gray-400 text-sm font-light">Establishing encrypted connections...</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center py-3 border-b border-gray-800">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <div>
+                            <div class="flex items-center mb-1">
+                                <span id="https-status-text" class="font-light">Establishing TLS 1.3 Encryption...</span>
+                            </div>
+                            <p class="text-xs text-gray-400">Encryption protocol</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center py-3 border-b border-gray-800">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                        </svg>
+                        <div>
+                            <div class="flex items-center mb-1">
+                                <span id="db-status-text" class="font-light">Validating Database Schema...</span>
+                            </div>
+                            <p class="text-xs text-gray-400">Connection stability</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Connection Status -->
             <div class="connection-card" id="connection-status-card">
                 <div class="mb-4">
                     <p class="text-xs text-gray-400 mb-1">Network Status</p>
@@ -131,14 +147,11 @@
                 </div>
 
                 <div class="mt-4">
-                    <div class="flex justify-center mb-2">
-                        <div class="progress-container">
-                            <svg width="100" height="100">
-                                <circle class="progress-bg progress-circle" cx="50" cy="50" r="45"></circle>
-                                <circle class="progress progress-circle" cx="50" cy="50" r="45" stroke-dasharray="283" stroke-dashoffset="283"></circle>
-                                <text class="percentage" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" id="percentage-text">0%</text>
-                            </svg>
-                        </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span id="connection-status" class="flex items-center font-medium">
+                            <span id="status-text">Checking connection...</span>
+                        </span>
+                        <span id="connection-percent" class="text-white">...0%</span> <!-- Original percentage display with dots -->
                     </div>
                     <p class="text-xs text-gray-400">Loading progress...</p> <!-- Extra text -->
                 </div>
@@ -179,7 +192,7 @@
                     setTimeout(runInitStep, step.delay);
                 } else {
                     checkHTTPS();
-                    document.getElementById('connection-status-card').classList.add('visible');
+                    document.getElementById('secure-connection-card').classList.add('visible');
                     setTimeout(() => {
                         document.getElementById('connection-status-card').classList.add('visible');
                     }, 500); // Delay for the connection status card to appear
@@ -277,18 +290,13 @@
         }
 
         function simulateConnectionProgress() {
-            const percentText = document.getElementById('percentage-text');
-            const progressCircle = document.querySelector('.progress');
+            const percentText = document.getElementById('connection-percent');
             const progressValues = [7, 10, 22, 32, 45, 47, 50, 57, 69, 70, 78, 80, 88, 90, 92, 95, 100];
             let index = 0;
 
-            const totalLength = 283; // Circumference of the circle (2 * π * r, where r = 45)
             const interval = setInterval(() => {
                 if (index < progressValues.length) {
-                    const value = progressValues[index];
-                    percentText.textContent = `${value}%`; // Update the percentage text
-                    const offset = totalLength - (totalLength * value / 100); // Calculate stroke-dashoffset
-                    progressCircle.style.strokeDashoffset = offset; // Update the progress circle
+                    percentText.textContent = `...${progressValues[index]}%`; // Update the original percentage display with dots
                     index++;
                 } else {
                     clearInterval(interval);
@@ -299,8 +307,7 @@
         function resetConnection() {
             const statusText = document.getElementById('status-text');
             statusText.textContent = 'Checking connection...';
-            document.getElementById('percentage-text').textContent = '0%'; // Reset the percentage display
-            document.querySelector('.progress').style.strokeDashoffset = 283; // Reset the progress circle
+            document.getElementById('connection-percent').textContent = '...0%'; // Reset the original percentage display
         }
     </script>
 </body>

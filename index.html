@@ -31,6 +31,42 @@
         .error-message {
             background: rgba(15, 15, 15, 0.8); /* Match background for error message */
         }
+        .progress-container {
+            width: 100%; /* Full width */
+            height: 3px; /* Height of the thin linear progress bar */
+            background-color: rgba(255, 255, 255, 0.2); /* Background color of the progress bar */
+            border-radius: 5px; /* Rounded corners */
+            margin-top: 10px; /* Space above the progress bar */
+            position: relative; /* Position for the percentage text */
+        }
+        .progress {
+            height: 100%; /* Full height */
+            background-color: white; /* Progress color */
+            width: 0%; /* Initial width */
+            border-radius: 5px; /* Rounded corners */
+            transition: width 0.5s ease; /* Smooth transition for progress */
+        }
+        .percentage {
+            position: absolute;
+            top: -20px; /* Position above the progress bar */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white; /* Text color */
+        }
+        .progress-text {
+            margin-top: 5px; /* Space above the progress text */
+            font-size: 0.9rem; /* Font size for progress text */
+            color: white; /* Text color */
+        }
+        .info-box {
+            background-color: rgba(0, 0, 0, 0.7); /* Dark transparent background for info box */
+            border: 1px solid rgba(255, 255, 255, 0.2); /* Border for visibility */
+            border-radius: 8px; /* Rounded corners */
+            padding: 1rem; /* Padding for content */
+            margin-top: 1rem; /* Space above the info box */
+        }
     </style>
 </head>
 <body>
@@ -73,48 +109,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Secure Connection Check -->
-            <div class="connection-card" id="secure-connection-card">
-                <div class="mb-6">
-                    <h3 class="text-xl font-light mb-1 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        Secure Connection Status
-                    </h3>
-                    <p class="text-gray-400 text-sm font-light">Establishing encrypted connections...</p>
-                </div>
-                
-                <div class="space-y-4">
-                    <div class="flex items-center py-3 border-b border-gray-800">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
-                        <div>
-                            <div class="flex items-center mb-1">
-                                <span id="https-status-text" class="font-light">Establishing TLS 1.3 Encryption...</span>
-                            </div>
-                            <p class="text-xs text-gray-400">Encryption protocol</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center py-3 border-b border-gray-800">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3">
-                            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
-                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-                        </svg>
-                        <div>
-                            <div class="flex items-center mb-1">
-                                <span id="db-status-text" class="font-light">Validating Database Schema...</span>
-                            </div>
-                            <p class="text-xs text-gray-400">Connection stability</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Connection Status -->
+            <!-- Linear Progress Indicator -->
             <div class="connection-card" id="connection-status-card">
                 <div class="mb-4">
                     <p class="text-xs text-gray-400 mb-1">Network Status</p>
@@ -147,14 +142,19 @@
                 </div>
 
                 <div class="mt-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span id="connection-status" class="flex items-center font-medium">
-                            <span id="status-text">Checking connection...</span>
-                        </span>
-                        <span id="connection-percent" class="text-white">...0%</span> <!-- Original percentage display with dots -->
+                    <div class="progress-container">
+                        <div class="progress" id="progress-bar"></div>
+                        <div class="percentage" id="percentage-text">0%</div>
                     </div>
-                    <p class="text-xs text-gray-400">Loading progress...</p> <!-- Extra text -->
+                    <p class="progress-text" id="progress-description">Initializing...</p> <!-- Text-based progress description -->
                 </div>
+            </div>
+            <!-- System Information Box -->
+            <div class="info-box">
+                <h3 class="text-lg font-semibold">System Information</h3>
+                <p class="text-sm">Version: 1.0.0</p>
+                <p class="text-sm">Last Update: October 2023</p>
+                <p class="text-sm">Status: All systems operational</p>
             </div>
         </div>
         
@@ -192,7 +192,7 @@
                     setTimeout(runInitStep, step.delay);
                 } else {
                     checkHTTPS();
-                    document.getElementById('secure-connection-card').classList.add('visible');
+                    document.getElementById('connection-status-card').classList.add('visible');
                     setTimeout(() => {
                         document.getElementById('connection-status-card').classList.add('visible');
                     }, 500); // Delay for the connection status card to appear
@@ -290,24 +290,39 @@
         }
 
         function simulateConnectionProgress() {
-            const percentText = document.getElementById('connection-percent');
-            const progressValues = [7, 10, 22, 32, 45, 47, 50, 57, 69, 70, 78, 80, 88, 90, 92, 95, 100];
+            const percentText = document.getElementById('percentage-text');
+            const progressBar = document.getElementById('progress-bar');
+            const progressDescription = document.getElementById('progress-description');
+            const progressValues = [
+                { value: 0, text: "Initializing..." },
+                { value: 10, text: "Connecting to server..." },
+                { value: 30, text: "Searching database..." },
+                { value: 50, text: "Establishing connection..." },
+                { value: 70, text: "Authenticating credentials..." },
+                { value: 90, text: "Finalizing..." },
+                { value: 100, text: "Complete!" }
+            ];
             let index = 0;
 
             const interval = setInterval(() => {
                 if (index < progressValues.length) {
-                    percentText.textContent = `...${progressValues[index]}%`; // Update the original percentage display with dots
+                    const progress = progressValues[index];
+                    percentText.textContent = `${progress.value}%`; // Update the percentage text
+                    progressBar.style.width = `${progress.value}%`; // Update the progress bar width
+                    progressDescription.textContent = progress.text; // Update the progress description
                     index++;
                 } else {
                     clearInterval(interval);
                 }
-            }, 300); // Update every 300ms for faster progress
+            }, 500); // Update every 500ms for smoother progress
         }
 
         function resetConnection() {
             const statusText = document.getElementById('status-text');
             statusText.textContent = 'Checking connection...';
-            document.getElementById('connection-percent').textContent = '...0%'; // Reset the original percentage display
+            document.getElementById('percentage-text').textContent = '0%'; // Reset the percentage display
+            document.getElementById('progress-bar').style.width = '0%'; // Reset the progress bar
+            document.getElementById('progress-description').textContent = "Initializing..."; // Reset the progress description
         }
     </script>
 </body>

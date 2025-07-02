@@ -15,11 +15,13 @@
             align-items: center; /* Center vertically */
             height: 100vh; /* Full height */
             margin: 0; /* Remove default margin */
+            position: relative; /* Position for overlay */
         }
         .container {
             width: 90%; /* Responsive width */
             max-width: 600px; /* Max width for larger screens */
             text-align: center; /* Center text */
+            z-index: 10; /* Ensure content is above overlay */
         }
         .connection-card {
             background-color: transparent; /* Make connection cards transparent */
@@ -67,14 +69,61 @@
             padding: 1rem; /* Padding for content */
             margin-top: 1rem; /* Space above the info box */
         }
+        .hidden {
+            display: none; /* Hide elements */
+        }
+        .visible {
+            display: block; /* Show elements */
+        }
+        .info-item {
+            display: flex; /* Use flexbox for linear layout */
+            align-items: center; /* Center items vertically */
+            margin-bottom: 0.5rem; /* Space between items */
+        }
+        .icon {
+            margin-right: 0.5rem; /* Space between icon and text */
+        }
+        .status-complete {
+            color: green; /* Color for tick mark */
+            margin-left: 0.5rem; /* Space between text and tick mark */
+        }
+        .status-error {
+            color: red; /* Color for error mark */
+            margin-left: 0.5rem; /* Space between text and error mark */
+        }
+        .overlay {
+            position: fixed; /* Fixed position for overlay */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7); /* Dark overlay */
+            backdrop-filter: blur(5px); /* Blurry background */
+            display: none; /* Hidden by default */
+            justify-content: center; /* Center content */
+            align-items: center; /* Center content */
+            z-index: 5; /* Below the container */
+        }
+        .error-content {
+            text-align: center; /* Center text in error content */
+        }
     </style>
 </head>
 <body>
+    <div class="overlay" id="error-overlay">
+        <div class="error-content">
+            <i class="fas fa-exclamation-triangle text-4xl text-red-500"></i>
+            <p class="text-lg text-white">No Internet Connection</p>
+            <button id="retry-btn" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none">
+                Retry
+            </button>
+        </div>
+    </div>
     <div class="container">
         <div class="text-center mb-6" id="content">
-            <h1 class="text-4xl sm:text-5xl font-thin tracking-tighter mb-2" id="title">Dr.Researcher</h1>
-            <p class="text-sm text-gray-400 tracking-wider" id="booting-text" style="display: none;">Booting system...</p>
-            <p class="text-xs text-gray-500 mt-1" id="booting-subtext" style="display: none;">Loading core components</p>
+            <h1 class="text-4xl sm:text-5xl font-thin tracking-tighter mb-2 visible" id="title">Dr.Researcher</h1>
+            <p class="text-sm text-gray-400 tracking-wider hidden" id="booting-text">Booting system...</p>
+            <p class="text-xs text-gray-500 mt-1 hidden" id="booting-subtext">Loading core components</p>
         </div>
         
         <div class="space-y-6">
@@ -88,8 +137,8 @@
                             </svg>
                         </div>
                         <div id="init-status">
-                            <p class="text-gray-400" id="init-text">Booting system...</p>
-                            <p class="text-xs text-gray-500 mt-1" id="init-subtext">Loading core components</p>
+                            <p class="text-gray-400 hidden" id="init-text">Booting system...</p>
+                            <p class="text-xs text-gray-500 mt-1 hidden" id="init-subtext">Loading core components</p>
                         </div>
                     </div>
                     <div id="loading-status" class="text-xs text-gray-500"></div>
@@ -97,14 +146,20 @@
                 <div class="mt-3 pt-3 border-t border-gray-800">
                     <p class="text-xs text-gray-400 mb-1">System Status</p>
                     <div id="init-messages" class="space-y-2 text-sm">
-                        <div class="flex items-center" id="search-status">
+                        <div class="flex items-center hidden" id="search-status">
                             <span>Searching database...</span>
+                            <i class="fas fa-check-circle status-complete hidden"></i>
+                            <i class="fas fa-times-circle status-error hidden"></i>
                         </div>
-                        <div class="flex items-center" id="connect-status">
+                        <div class="flex items-center hidden" id="connect-status">
                             <span>Establishing connection...</span>
+                            <i class="fas fa-check-circle status-complete hidden"></i>
+                            <i class="fas fa-times-circle status-error hidden"></i>
                         </div>
-                        <div class="flex items-center" id="auth-status">
+                        <div class="flex items-center hidden" id="auth-status">
                             <span>Authenticating credentials...</span>
+                            <i class="fas fa-check-circle status-complete hidden"></i>
+                            <i class="fas fa-times-circle status-error hidden"></i>
                         </div>
                     </div>
                 </div>
@@ -127,7 +182,7 @@
                     </div>
                 </div>
                 
-                <div class="error-message" id="error-message">
+                <div class="error-message hidden" id="error-message">
                     <div class="flex items-center justify-center">
                         <i class="fas fa-exclamation-triangle warning-icon"></i>
                         <p class="text-sm">
@@ -136,9 +191,6 @@
                             <span class="text-xs">Please check your internet connection.</span>
                         </p>
                     </div>
-                    <button id="retry-btn" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none">
-                        Retry
-                    </button>
                 </div>
 
                 <div class="mt-4">
@@ -149,12 +201,21 @@
                     <p class="progress-text" id="progress-description">Initializing...</p> <!-- Text-based progress description -->
                 </div>
             </div>
-            <!-- System Information Box -->
+            <!-- Enhanced System Information Box -->
             <div class="info-box">
                 <h3 class="text-lg font-semibold">System Information</h3>
-                <p class="text-sm">Version: 1.0.0</p>
-                <p class="text-sm">Last Update: October 2023</p>
-                <p class="text-sm">Status: All systems operational</p>
+                <div class="info-item">
+                    <i class="fab fa-github icon text-gray-400"></i>
+                    <p class="text-sm">Version: 3.2</p>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-calendar-alt icon text-gray-400"></i>
+                    <p class="text-sm">Last Update: <span id="last-update-date"></span></p>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-check-circle icon text-green-400"></i>
+                    <p class="text-sm">Status: All systems live</p>
+                </div>
             </div>
         </div>
         
@@ -165,59 +226,62 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Set the last update date to today
+            const today = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('last-update-date').textContent = today.toLocaleDateString(undefined, options);
+
             // Initialize system sequence
             const initSteps = [
-                { text: "Booting system...", subtext: "Loading core components", delay: 1000 },
-                { text: "Searching database...", subtext: "", delay: 800 },
-                { text: "Establishing connection...", subtext: "", delay: 800 },
-                { text: "Authenticating credentials...", subtext: "", delay: 800 },
-                { text: "System ready", subtext: "Establishing connections", delay: 700 }
+                { element: 'title', delay: 2000 }, // Title
+                { element: 'booting-text', delay: 2000 }, // Booting text
+                { element: 'booting-subtext', delay: 2000 }, // Booting subtext
+                { element: 'search-status', delay: 800 }, // Step 1
+                { element: 'connect-status', delay: 800 }, // Step 2
+                { element: 'auth-status', delay: 800 }, // Step 3
+                { element: 'init-text', delay: 700 } // Final step
             ];
             
             let currentInitStep = 0;
+            
             function runInitStep() {
                 if (currentInitStep < initSteps.length) {
                     const step = initSteps[currentInitStep];
-                    if (currentInitStep === 0) {
-                        document.getElementById('booting-text').style.display = 'block';
-                        document.getElementById('booting-subtext').style.display = 'block';
-                    } else {
-                        const statusText = document.getElementById('init-text');
-                        const statusSubtext = document.getElementById('init-subtext');
-                        statusText.textContent = step.text;
-                        statusSubtext.textContent = step.subtext;
-                        document.getElementById('loading-card').classList.add('visible');
+                    const element = document.getElementById(step.element);
+                    
+                    // Show the current element
+                    element.classList.remove('hidden');
+                    element.classList.add('visible');
+
+                    // Set the text for the init status
+                    if (currentInitStep === 3) {
+                        document.getElementById('init-text').textContent = "Searching database...";
+                        document.querySelector('#search-status .status-complete').classList.remove('hidden');
+                    } else if (currentInitStep === 4) {
+                        document.getElementById('init-text').textContent = "Establishing connection...";
+                        document.querySelector('#connect-status .status-complete').classList.remove('hidden');
+                    } else if (currentInitStep === 5) {
+                        document.getElementById('init-text').textContent = "Authenticating credentials...";
+                        document.querySelector('#auth-status .status-complete').classList.remove('hidden');
+                    } else if (currentInitStep === 6) {
+                        document.getElementById('init-text').textContent = "System ready";
                     }
+
                     currentInitStep++;
                     setTimeout(runInitStep, step.delay);
                 } else {
-                    checkHTTPS();
-                    document.getElementById('connection-status-card').classList.add('visible');
-                    setTimeout(() => {
-                        document.getElementById('connection-status-card').classList.add('visible');
-                    }, 500); // Delay for the connection status card to appear
+                    checkConnection(); // Check connection after initialization
+                    simulateConnectionProgress(); // Start the progress simulation
                 }
             }
             
             setTimeout(runInitStep, 500);
-            
-            // Simulate database connection check with delay
-            setTimeout(checkDatabase, 1500);
-            
-            // Initialize connection status
-            checkConnection();
             
             // Add retry button event listener
             document.getElementById('retry-btn').addEventListener('click', function() {
                 resetConnection();
                 checkConnection();
             });
-            
-            // Start system status animation
-            simulateSystemHealth();
-            
-            // Simulate connection progress
-            simulateConnectionProgress();
             
             // Add online/offline event listeners
             window.addEventListener('online', function() {
@@ -229,66 +293,38 @@
             });
         });
         
-        function checkHTTPS() {
-            setTimeout(function() {
-                const httpsText = document.getElementById('https-status-text');
-                
-                if (window.location.protocol === 'https:') {
-                    httpsText.textContent = 'HTTPS Secure';
-                } else {
-                    httpsText.textContent = 'HTTP Not Secure';
-                }
-            }, 1000);
-        }
-        
-        function checkDatabase() {
-            const dbText = document.getElementById('db-status-text');
-            
-            // Simulating random success (90% chance)
-            const isSuccess = Math.random() > 0.1;
-            
-            setTimeout(function() {
-                if (isSuccess) {
-                    dbText.textContent = 'Database Connected';
-                } else {
-                    dbText.textContent = 'Connection Failed';
-                }
-            }, 1000);
-        }
-        
         function checkConnection() {
             const statusText = document.getElementById('status-text');
             const errorBox = document.getElementById('error-message');
-            
+            const errorOverlay = document.getElementById('error-overlay');
+            const searchStatus = document.getElementById('search-status');
+            const connectStatus = document.getElementById('connect-status');
+            const authStatus = document.getElementById('auth-status');
+
             if (navigator.onLine) {
                 statusText.textContent = 'Online';
                 errorBox.style.display = 'none'; // Hide error message
+                errorOverlay.style.display = 'none'; // Hide overlay
+                // Show connection established message
+                alert("Connection established!");
+                // Reset status icons to green
+                searchStatus.querySelector('.status-complete').classList.remove('hidden');
+                searchStatus.querySelector('.status-error').classList.add('hidden');
+                connectStatus.querySelector('.status-complete').classList.remove('hidden');
+                connectStatus.querySelector('.status-error').classList.add('hidden');
+                authStatus.querySelector('.status-complete').classList.remove('hidden');
+                authStatus.querySelector('.status-error').classList.add('hidden');
             } else {
                 statusText.textContent = 'Offline';
                 document.getElementById('error-text').textContent = 'Oops! It seems you\'re offline.';
                 errorBox.style.display = 'block'; // Show error message
+                errorOverlay.style.display = 'flex'; // Show overlay
+                // Change all ticks to red crosses
+                document.querySelectorAll('.status-complete').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.status-error').forEach(el => el.classList.remove('hidden'));
             }
         }
         
-        function simulateSystemHealth() {
-            const steps = [
-                { element: 'search-status', text: 'Database located', delay: 800 },
-                { element: 'connect-status', text: 'Connection established', delay: 1200 },
-                { element: 'auth-status', text: 'Authentication successful', delay: 1500 }
-            ];
-
-            steps.forEach((step, index) => {
-                setTimeout(() => {
-                    const element = document.getElementById(step.element);
-                    element.querySelector('span:last-child').textContent = step.text;
-                    
-                    if (index === steps.length - 1) {
-                        document.getElementById('init-text').textContent = "System fully operational";
-                    }
-                }, step.delay);
-            });
-        }
-
         function simulateConnectionProgress() {
             const percentText = document.getElementById('percentage-text');
             const progressBar = document.getElementById('progress-bar');
